@@ -8,6 +8,18 @@
 #define CANVAS_WIDTH 10
 #define CANVAS_HEIGHT 20
 
+#define LEFT_KEY 0x25
+#define RIGHT_KEY 0x27 
+#define ROTATE_KEY 0x5a
+#define DOWN_KEY 0x28 
+#define FALL_KEY 0x20 
+
+#define LEFT_FUNC() GetAsyncKeyState(LEFT_KEY) & 0x8000
+#define RIGHT_FUNC() GetAsyncKeyState(RIGHT_KEY) & 0x8000
+#define ROTATE_FUNC() GetAsyncKeyState(ROTATE_KEY) & 0x8000
+#define DOWN_FUNC() GetAsyncKeyState(DOWN_KEY) & 0x8000
+#define FALL_FUNC() GetAsyncKeyState(FALL_KEY) & 0x8000
+
 typedef enum
 {
     RED = 41,
@@ -282,6 +294,29 @@ int clearLine(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]) {
 }
 void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state)
 {
+    if (ROTATE_FUNC())
+    {
+        int newRotate = (state->rotate + 1) % 4;
+        if ((move(canvas, state->x, state->y, state->rotate, state->x, state->y, newRotate, state->queue[0])))
+        {
+            state->rotate = newRotate;
+        }
+    }
+    else if (LEFT_FUNC())
+    {
+        if ((move(canvas, state->x, state->y, state->rotate, state->x-1, state->y, state->rotate, state->queue[0])))
+        {
+            state->x -= 1;
+        }
+    }
+    else if (RIGHT_FUNC())
+    {
+        if (move(canvas, state->x, state->y, state->rotate, state->x+1, state->y, state->rotate, state->queue[0]))
+        {
+            state->x += 1;
+        }
+    }
+
     if (move(canvas, state->x, state->y, state->rotate, state->x, state->y + 1, state->rotate, state->queue[0]))
     {
         state->y++;
