@@ -3,7 +3,9 @@ const net = require('net');
 var playerCount = 0;
 
 var playerACanvas = "";
+var playerAdamage = 0;
 var playerBCanvas = "";
+var playerBdamage = 0;
 
 
 // Create a TCP server
@@ -26,6 +28,17 @@ const server = net.createServer((socket) => {
             }
         }, 100);
     }
+    if (data.toString().includes("attackDataJson")){
+        var attackData = data.toString().split("attackDataJson")[1]
+        var attack = JSON.parse(attackData);
+        if (attack.attack == 0) return;
+        if (player == "A"){
+            playerBdamage += Number(attack.attack);
+        }
+        else if (player == "B"){
+            playerAdamage += Number(attack.attack);
+        }
+    }
     else if (player == "A"){
         playerACanvas = data.toString();
     }
@@ -35,13 +48,21 @@ const server = net.createServer((socket) => {
   });
 
   setInterval(() => {
+    if (player == "A" && playerAdamage > 0){
+        socket.write("damage.data"+playerAdamage+"damage.data");
+        playerAdamage = 0;
+    }
+    if (player == "B" && playerBdamage > 0){
+        socket.write("damage.data"+playerBdamage+"damage.data");
+        playerBdamage = 0;
+    }
     if (player == "A" && playerBCanvas != ""){
         socket.write("st"+playerBCanvas+"ed");
     }
     else if (player == "B" && playerACanvas != ""){
         socket.write("st"+playerACanvas+"ed");
     }
-  }, 500)
+  }, 200)
 
 
   // Handle client disconnect
