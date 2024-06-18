@@ -8,20 +8,31 @@ var playerAdamage = 0;
 var playerBCanvas = "";
 var playerBLastSend = -1;
 var playerBdamage = 0;
-var gameInterval;
-var ending = false;
+var gameInterval = [];
+var gaming = false;
+/** @type {net.Socket} */
+var socketA;
+/** @type {net.Socket} */
+var socketB;
 
 
 // Create a TCP server
 const server = net.createServer((socket) => {
   var player;
-  if (playerCount == 0) player = "A";
-  else if (playerCount == 1) player = "B";
-  else {
-      socket.write("SERVERFULL");
-      socket.end();
-      return;
+  if (gaming) {
+    socket.write("SERVERFULL");
+    socket.end();
+    return;
   }
+  if (playerCount == 0) {
+    player = "A";
+    socketA = socket;
+  }
+  else if (playerCount == 1) {
+    player = "B";
+    socketB = socket;
+  }
+      
 
   console.log('Client connected');
 
@@ -34,12 +45,14 @@ const server = net.createServer((socket) => {
         playerBLastSend = Date.now();
     }
     if (data.toString().includes("tetris connect")) {
+        console.log("new player connected");
         playerCount++;
         var waitStart = setInterval(() => {
             if (playerCount == 2){
+                console.log("game start");
                 socket.write("OK")
-                console.log("new player connected")
                 clearInterval(waitStart);
+                gaming = true;
             }
         }, 100);
     }
@@ -60,25 +73,16 @@ const server = net.createServer((socket) => {
     else if (player == "B"){
         playerBCanvas = data.toString();
     }
-    if (playerACanvas.includes("GAMEOVER") || playerBCanvas.includes("GAMEOVER")){
-        ending = true;
-        setTimeout(() => {
-            clearInterval(gameInterval);
-            playerACanvas = "";
-            playerBCanvas = "";
-            playerAdamage = 0;
-            playerBdamage = 0;
-            ending = false;
-        }, 3000)
-    }
   });
 
-  gameInterval = setInterval(() => {
+  gameInterval.push(setInterval(() => {
+    if (!gaming) return;
     if (Date.now() - playerALastSend > 10000){
-        if (player == "A")
+        console.log("player A timeout");
         playerACanvas = "GAMEOVER";
     }
     if (Date.now() - playerBLastSend > 10000){
+        console.log("player B timeout");
         playerBCanvas = "GAMEOVER";
     }
     if (player == "A" && playerAdamage > 0){
@@ -95,18 +99,41 @@ const server = net.createServer((socket) => {
     else if (player == "B" && playerACanvas != ""){
         socket.write("st"+playerACanvas+"ed");
     }
-  }, 200)
+    if (playerACanvas.includes("GAMEOVER") || playerBCanvas.includes("GAMEOVER")){
+        console.log("game end, restart");
+        if (socketA.writable) socketA.write("stGAMEOVERed");
+        if (socketB.writable) socketB.write("stGAMEOVERed");
+        socketA.destroy();
+        socketB.destroy();
+        for (var i = 0; i < gameInterval.length; i++){
+            clearInterval(gameInterval[i]);
+        }
+        playerALastSend = -1;
+        playerBLastSend = -1;
+        playerACanvas = "";
+        playerBCanvas = "";
+        playerAdamage = 0;
+        playerBdamage = 0;
+        gaming = false;
+        playerCount = 0;
+    }
+  }, 200))
 
 
   // Handle client disconnect
   socket.on('end', () => {
-    playerCount--;
     console.log('Client disconnected');
+    if (!gaming) return;
+    if (player == "A") playerACanvas = "GAMEOVER";
+    if (player == "B") playerBCanvas = "GAMEOVER";
   });
 
   // Handle errors
   socket.on('error', (err) => {
-    playerCount--;
+    console.log('Client disconnected');
+    if (!gaming) return;
+    if (player == "A") playerACanvas = "GAMEOVER";
+    if (player == "B") playerBCanvas = "GAMEOVER";
     console.error(`Error: ${err.message}`);
   });
 
@@ -118,6 +145,6 @@ const server = net.createServer((socket) => {
 // }, 1000)
 
 // Start the server and listen on port 8080
-server.listen(8080, () => {
-  console.log('Server listening on port 8080');
+server.listen(6060, () => {
+  console.log('Server listening on port 6060');
 });

@@ -243,7 +243,10 @@ void getDataFromServer(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state){
 }
 
 int main() {
-    if (!init()) return 0;
+    if (!init()) {
+        sleep(10);
+        return 0;
+    }
     ncurse_init();
     srand(time(NULL));
 
@@ -288,7 +291,7 @@ int main() {
         }
     }
 
-    int sleep_interval = 10000; // 10 milliseconds
+    int sleep_interval = 20000; // 10 milliseconds
     int fall_interval = 300000; // 0.3 seconds
     int fall_timer = 0;
     int send_interval = 200000; // 0.5 second
