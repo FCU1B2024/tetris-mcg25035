@@ -53,8 +53,19 @@ bool init() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
 
+    // Get the IP address of the server
+    char ip[100];
+    struct hostent *he;
+    struct in_addr **addr_list;
+    if ((he = gethostbyname(SERVER_IP)) == NULL) {
+        perror("Invalid address or Address not supported");
+        return false;
+    }
+    addr_list = (struct in_addr **)he->h_addr_list;
+    strcpy(ip, inet_ntoa(*addr_list[0]));
+
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
         perror("Invalid address or Address not supported");
         return false;
     }
@@ -79,6 +90,9 @@ bool init() {
         read_from_server(response);
         if (strstr(response, "OK") != NULL){
             break;
+        }
+        if (strstr(response, "SERVERFULL") != NULL){
+            return false;
         }
     }
 

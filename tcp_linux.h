@@ -7,11 +7,13 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <netinet/in.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <netdb.h>
 
-#define SERVER_IP "127.0.0.1" // Replace with your server's IP address
-#define SERVER_PORT 8080      // Replace with your server's port
+#define SERVER_IP "codingbear.mcloudtw.com" // Replace with your server's IP address
+#define SERVER_PORT 6060  // Replace with your server's port
 
 extern int sock;
 extern struct sockaddr_in server_addr;
