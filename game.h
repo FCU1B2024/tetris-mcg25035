@@ -55,5 +55,6 @@ bool isFallingBlockExist(Block block);
 void resetGhostBlock(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]);
 void pushUpBlocks(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], int height);
 void sendCanvasToServer(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]);
+void placeGhostBlockAtCoordinates(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], int x, int y, int size, int rotate, Shape shapeData);
 
 #endif

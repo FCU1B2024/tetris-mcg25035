@@ -43,7 +43,7 @@ bool init() {
     // struct sockaddr_in server_addr;
     // fd_set readfds;
     // struct timeval timeout;
-
+    printf("Connecting to server...\n");
     // Create socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("Socket creation error");
@@ -85,6 +85,8 @@ bool init() {
     timeout.tv_sec = 0;
     timeout.tv_usec = 1000000; // 20 milliseconds
 
+    printf("Waiting for player...\n");
+
     while (true) {
         char response[1024] = "";
         read_from_server(response);
@@ -92,6 +94,7 @@ bool init() {
             break;
         }
         if (strstr(response, "SERVERFULL") != NULL){
+            printf("Server is full, please connect later.\n");
             return false;
         }
     }
