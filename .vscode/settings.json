@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "ncurses.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "shapes.h": "c",
+        "inet.h": "c",
+        "netdb.h": "c"
+    }
+}

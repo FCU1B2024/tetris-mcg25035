@@ -33,6 +33,8 @@ typedef struct {
     int leftKeyTime; // 左键按住时间
     int rightKeyTime; // 右键按住时间
     int damage;
+    bool gameOver;
+    bool win;
 } State;
 
 typedef struct {

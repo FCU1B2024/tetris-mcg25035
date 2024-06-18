@@ -71,6 +71,22 @@ void printCanvas(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], Block canvas2[CANVAS
     for (int i = 0; i < CANVAS_HEIGHT; i++) {
         addch('|');
         for (int j = 0; j < CANVAS_WIDTH; j++) {
+            if (state->gameOver) {
+                if (i == CANVAS_HEIGHT-1 && j == 0){
+                    addstr("GAMEOVER");
+                    j += 4;
+                }
+                output_empty_block();
+                continue;
+            }
+            if (state->win) {
+                if (i == CANVAS_HEIGHT-1 && j == 0){
+                    addstr("YOU WIN ");
+                    j += 4;
+                }
+                output_empty_block();
+                continue;
+            }
             if (canvas[i][j].ghost) {
                 output_ghost_block(canvas[i][j].color);
             }
@@ -207,8 +223,12 @@ void syncCanvas(char* buffer, Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]){
 
 void getDataFromServer(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state){
     char buffer[1024];
+    if (state->gameOver) return;
     read_from_server(buffer);
     syncCanvas(buffer, canvas);
+    if (findSubstringPosition(buffer, "GAMEOVER") != -1){
+        state->win = true;
+    }
     char damageStr[10];
     int start = findSubstringPosition(buffer, "damage.data");
     if (start == -1) return;
@@ -235,7 +255,9 @@ int main() {
         .fallTime = 0,
         .leftKeyTime = 0,
         .rightKeyTime = 0,
-        .damage = 0
+        .damage = 0,
+        .gameOver = false,
+        .win = false
     };
 
     for (int i = 0; i < 4; i++) {
@@ -278,6 +300,7 @@ int main() {
         getDataFromServer(canvasB, &state);
         int elapsedTime = sleep_interval; // 每次循环的时间间隔
         printCanvas(canvas, canvasB, &state);
+        if (state.win) break;
         logic(canvas, &state, elapsedTime, &full_fall);
         usleep(sleep_interval);
         alertHeight = state.damage;
@@ -288,8 +311,8 @@ int main() {
         if (send_timer >= send_interval) {
             send_timer = 0;
             sendCanvasToServer(canvas);
+            if (state.gameOver) break;
         }
-
         if (fall_timer >= fall_interval) {
             fallone = true;
             fall_timer = 0;
@@ -306,6 +329,8 @@ int main() {
             comboContinue = false;
         }
     }
+    usleep(1000*1000*3);
+    
 
     endwin(); // 恢复正常终端行为
     return 0;

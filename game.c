@@ -4,6 +4,7 @@
 #include <time.h>
 
 int64_t lastFallTime = 0;
+bool gameOver = false;
 
 int64_t millis(){
     struct timespec now;
@@ -57,6 +58,9 @@ void falledEvent(State* state, Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]){
     state->queue[1] = state->queue[2];
     state->queue[2] = state->queue[3];
     state->queue[3] = rand() % 7;
+    if (!updateBlockPosition(canvas, state->x, state->y, state->rotate, state->x, state->y, state->rotate, state->queue[0])) {
+        gameOver = true;
+    }
 }
 
 bool isKeyMovingPreventFall(){
@@ -109,6 +113,10 @@ void sendCanvasToServer(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH]){
         index++;
     }
     message[index] = '\0';
+    if (gameOver) {
+        send_to_server("GAMEOVER");
+        return;
+    }
     send_to_server(message);
 }
 
@@ -122,6 +130,10 @@ void logic(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], State* state, int elapsedT
     key = getch();
     bool moved = false;
     printw("%c", key);
+    if (gameOver) {
+        state->gameOver = true;
+        return;
+    }
     if (ROTATE_FUNC(key)) {
         updateLastKeyTime();
         int newRotate = (state->rotate + 1) % 4;
@@ -249,6 +261,10 @@ void placeBlockAtCoordinates(Block canvas[CANVAS_HEIGHT][CANVAS_WIDTH], int x, i
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             if (!shapeData.rotates[rotate][i][j]) continue;
+            if (isBlockExist(canvas[y + i][x + j])) {
+                gameOver = true;
+                return;
+            }
             setBlock(&canvas[y + i][x + j], shapeData.color, shapeData.shape, true, false);
         }
     }
