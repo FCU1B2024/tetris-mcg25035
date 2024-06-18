@@ -1,4 +1,5 @@
 const net = require('net');
+const fs = require('fs');
 
 var playerCount = 0;
 
@@ -10,10 +11,27 @@ var playerBLastSend = -1;
 var playerBdamage = 0;
 var gameInterval = [];
 var gaming = false;
+var logged = false;
 /** @type {net.Socket} */
 var socketA;
 /** @type {net.Socket} */
 var socketB;
+
+const newGameLog = function () {
+  try{
+
+      if (!fs.existsSync("gameCount.count")) {
+          fs.writeFileSync("gameCount.count", "0");
+      }
+  
+      var gameCount = fs.readFileSync("gameCount.count").toString();
+      gameCount = Number(gameCount) + 1;
+      fs.writeFileSync("gameCount.count", gameCount.toString());
+  }
+  catch (ignored) {
+      return;
+  }
+}
 
 
 // Create a TCP server
@@ -47,8 +65,13 @@ const server = net.createServer((socket) => {
     if (data.toString().includes("tetris connect")) {
         console.log("new player connected");
         playerCount++;
+        logged = false;
         var waitStart = setInterval(() => {
             if (playerCount == 2){
+                if (!logged){
+                    newGameLog();
+                    logged = true;
+                }
                 console.log("game start");
                 socket.write("OK")
                 clearInterval(waitStart);
